@@ -1,6 +1,4 @@
 """
-features.py
-
 Leak-free feature engineering for the ML/DL models.
 
 RULE ENFORCED THROUGHOUT: every feature at row t must be computable using only

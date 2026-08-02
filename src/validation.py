@@ -1,6 +1,4 @@
 """
-validation.py
-
 Walk-forward (expanding window) cross-validation for time series.
 
 Standard k-fold CV shuffles rows, which is invalid for time series: it lets
