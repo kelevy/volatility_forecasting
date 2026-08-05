@@ -33,7 +33,7 @@ def walk_forward_splits(
     n_rows: int,
     n_splits: int = 5,
     min_train_size: float = 0.5,
-) -> Iterator[Fold]:
+):
     """
     Yields Fold objects with strictly non-overlapping, forward-only train/test
     index arrays over a dataset of length n_rows.

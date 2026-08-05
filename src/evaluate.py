@@ -17,12 +17,12 @@ import numpy as np
 import pandas as pd
 
 
-def rmse(y_true, y_pred) -> float:
+def rmse(y_true, y_pred):
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
-    return float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
+    return np.sqrt(np.mean((y_true - y_pred) ** 2))
 
 
-def qlike(y_true, y_pred, eps: float = 1e-8) -> float:
+def qlike(y_true, y_pred, eps: float = 1e-8):
     """
     QLIKE loss: mean( y_true/y_pred - log(y_true/y_pred) - 1 )
     Requires strictly positive values (volatility forecasts should be).
@@ -30,10 +30,10 @@ def qlike(y_true, y_pred, eps: float = 1e-8) -> float:
     y_true = np.clip(np.asarray(y_true), eps, None)
     y_pred = np.clip(np.asarray(y_pred), eps, None)
     ratio = y_true / y_pred
-    return float(np.mean(ratio - np.log(ratio) - 1))
+    return np.mean(ratio - np.log(ratio) - 1)
 
 
-def directional_accuracy(y_true, y_pred, y_prev) -> float:
+def directional_accuracy(y_true, y_pred, y_prev):
     """
     Fraction of times the model correctly predicts whether volatility rises
     or falls relative to the previous period's realized vol (y_prev).
@@ -41,10 +41,10 @@ def directional_accuracy(y_true, y_pred, y_prev) -> float:
     y_true, y_pred, y_prev = map(np.asarray, (y_true, y_pred, y_prev))
     true_dir = np.sign(y_true - y_prev)
     pred_dir = np.sign(y_pred - y_prev)
-    return float(np.mean(true_dir == pred_dir))
+    return np.mean(true_dir == pred_dir)
 
 
-def evaluate_all(y_true, y_pred, y_prev) -> dict:
+def evaluate_all(y_true, y_pred, y_prev):
     return {
         "RMSE": rmse(y_true, y_pred),
         "QLIKE": qlike(y_true, y_pred),
@@ -52,7 +52,7 @@ def evaluate_all(y_true, y_pred, y_prev) -> dict:
     }
 
 
-def results_table(results: dict) -> pd.DataFrame:
+def results_table(results: dict):
     """results: {model_name: {metric: value}} -> tidy DataFrame."""
     return pd.DataFrame(results).T
 

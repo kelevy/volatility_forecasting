@@ -14,7 +14,7 @@ TARGET_COL = "realized_vol"
 FORBIDDEN_IN_FEATURES = {TARGET_COL}  # never allow the label to leak in as a feature
 
 
-def build_feature_matrix(df: pd.DataFrame, n_lags: int = 10) -> pd.DataFrame:
+def build_feature_matrix(df: pd.DataFrame, n_lags: int = 10):
     """
     Builds a leak-free feature set:
       - lagged log returns (t-1 ... t-n_lags)
