@@ -1,5 +1,7 @@
 """
-Runs the full volatility forecasting pipeline:
+main.py
+
+Orchestrates the full volatility forecasting pipeline:
   1. Load and prepare S&P 500 data
   2. Build the leak-free feature matrix
   3. Run walk-forward validation for all four models:
@@ -9,14 +11,15 @@ Runs the full volatility forecasting pipeline:
        - LSTM (DL, raw return sequences)
   4. Evaluate with RMSE, QLIKE, and directional accuracy
   5. Print results table and save diagnostic plots to results/
+
+Usage:
+    python src/main.py
 """
 
 import os
 import sys
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -121,49 +124,6 @@ def run_lstm(feature_df, raw_df, folds):
 
 
 # ─────────────────────────────────────────────
-# Plotting
-# ─────────────────────────────────────────────
-
-def plot_results(results: dict, actuals: np.ndarray, forecasts: dict):
-    os.makedirs(RESULTS_DIR, exist_ok=True)
-
-    # 1. Results bar chart
-    df = results_table(results)
-    fig, axes = plt.subplots(1, 3, figsize=(14, 4))
-    for ax, metric in zip(axes, ["RMSE", "QLIKE", "DirectionalAccuracy"]):
-        vals = df[metric].astype(float)
-        bars = ax.bar(vals.index, vals.values, color=["#4C72B0", "#DD8452", "#55A868", "#C44E52"])
-        ax.set_title(metric, fontsize=12, fontweight="bold")
-        ax.set_ylabel(metric)
-        ax.tick_params(axis="x", rotation=15)
-        for bar, val in zip(bars, vals.values):
-            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height(),
-                    f"{val:.4f}", ha="center", va="bottom", fontsize=8)
-    plt.suptitle("Walk-Forward Volatility Forecast Comparison (S&P 500)", fontsize=13)
-    plt.tight_layout()
-    plt.savefig(os.path.join(RESULTS_DIR, "model_comparison.png"), dpi=150)
-    plt.close()
-    print("Saved: results/model_comparison.png")
-
-    # 2. Forecast vs actual (use the model with best RMSE)
-    best_model = results_table(results)["RMSE"].astype(float).idxmin()
-    best_preds = forecasts[best_model]
-    n = min(len(actuals), len(best_preds), 250)
-
-    fig, ax = plt.subplots(figsize=(13, 4))
-    ax.plot(actuals[-n:], label="Realized Vol", color="black", linewidth=1)
-    ax.plot(best_preds[-n:], label=f"{best_model} forecast", color="#DD8452",
-            linewidth=1, linestyle="--")
-    ax.set_title(f"Realized vs Forecast Volatility — {best_model} (last {n} test days)", fontsize=11)
-    ax.set_ylabel("Annualized Volatility")
-    ax.legend()
-    plt.tight_layout()
-    plt.savefig(os.path.join(RESULTS_DIR, "forecast_vs_actual.png"), dpi=150)
-    plt.close()
-    print("Saved: results/forecast_vs_actual.png")
-
-
-# ─────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────
 
@@ -242,9 +202,13 @@ def main():
     table.to_csv(os.path.join(RESULTS_DIR, "results.csv"))
     print("Saved: results/results.csv")
 
-    plot_results(all_results, actuals, all_forecasts)
+    # Save forecasts for use in notebooks
+    forecasts_df = pd.DataFrame(all_forecasts)
+    forecasts_df["actual"] = actuals
+    forecasts_df.to_csv(os.path.join(RESULTS_DIR, "forecasts.csv"), index=False)
+    print("Saved: results/forecasts.csv")
 
-    print("\nDone. Fill in the results table in README.md with the numbers above.")
+    print("\nDone. Open notebooks/02_results_analysis.ipynb to visualize and interpret results.")
 
 
 if __name__ == "__main__":
