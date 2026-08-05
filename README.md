@@ -50,6 +50,7 @@ cross-validation. This project uses:
 vol_forecast_project/
 ├── README.md
 ├── requirements.txt
+├── main.py # runs the full pipeline
 ├── src/
 │   ├── data_loader.py      # fetch & cache market data
 │   ├── features.py         # leak-free feature engineering
@@ -58,11 +59,7 @@ vol_forecast_project/
 │   │   ├── baseline_garch.py
 │   │   ├── ml_xgboost.py
 │   │   └── dl_lstm.py
-│   ├── evaluate.py         # RMSE, QLIKE, directional accuracy
-│   └── main.py              # orchestrates the full pipeline
-├── gcp/
-│   ├── upload_to_bigquery.py
-│   ├── vertex_ai_train.py
-│   └── README_gcp.md
+│   └── evaluate.py         # RMSE, QLIKE, directional accuracy
+│               
 └── results/                 # created when you run main.py                
 ```
