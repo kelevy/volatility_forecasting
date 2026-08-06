@@ -61,5 +61,6 @@ vol_forecast_project/
 │   │   └── dl_lstm.py
 │   └── evaluate.py         # RMSE, QLIKE, directional accuracy
 │               
-└── results/                 # created when you run main.py                
+├── results/                # created when you run main.py
+└── notebooks  
 ```
