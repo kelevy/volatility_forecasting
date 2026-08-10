@@ -19,14 +19,14 @@ import sys
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 from data_loader import load_dataset
 from features import build_feature_matrix, get_feature_names, TARGET_COL
 from validation import walk_forward_splits, split_xy
 from evaluate import evaluate_all, results_table
 
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results")
+RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 N_SPLITS = 5
 VOL_WINDOW = 5
 MIN_TRAIN_SIZE = 0.6
@@ -180,7 +180,7 @@ def main():
     except ImportError:
         print("        [skipped — install `torch` package]")
 
-    # 5. Results
+    # 5. Save results
     print("\n[5/5] Results")
     print("=" * 60)
     table = results_table(all_results)
@@ -191,7 +191,6 @@ def main():
     table.to_csv(os.path.join(RESULTS_DIR, "results.csv"))
     print("Saved: results/results.csv")
 
-    # Save forecasts for use in notebooks
     forecasts_df = pd.DataFrame(all_forecasts)
     forecasts_df["actual"] = actuals
     forecasts_df.to_csv(os.path.join(RESULTS_DIR, "forecasts.csv"), index=False)
