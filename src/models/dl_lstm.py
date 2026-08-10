@@ -6,7 +6,7 @@ features and the GARCH baseline.
 
 Uses PyTorch. Kept deliberately small (single LSTM layer, small hidden size)
 since this is a single-asset, moderate-data-size problem -- a huge network
-here would just overfit.
+would overfit.
 """
 
 import numpy as np
@@ -152,7 +152,7 @@ def run_lstm_walk_forward(log_returns: pd.Series, target: pd.Series, folds, seq_
 
 
 if __name__ == "__main__":
-    # Smoke test with synthetic data (requires torch installed)
+    # Smoke test with synthetic data 
     rng = np.random.default_rng(0)
     n, seq_len = 500, 21
     returns = pd.Series(rng.normal(0, 0.01, n))
