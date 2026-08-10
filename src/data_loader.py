@@ -1,6 +1,4 @@
 """
-data_loader.py
-
 Downloads S&P 500 daily price data and computes log returns and realized
 volatility (the forecasting target). Caches to disk so repeated runs don't
 re-download.
