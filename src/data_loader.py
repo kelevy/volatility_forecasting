@@ -15,7 +15,7 @@ TICKER = "^GSPC"
 START_DATE = "2005-01-01"
 
 
-def _flatten_columns(df: pd.DataFrame) -> pd.DataFrame:
+def _flatten_columns(df: pd.DataFrame):
     """
     Recent yfinance versions return MultiIndex columns even for a single
     ticker, e.g. ('Close', '^GSPC') instead of just 'Close'. This collapses
@@ -30,7 +30,7 @@ def _flatten_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def download_data(ticker: str = TICKER, start: str = START_DATE) -> pd.DataFrame:
+def download_data(ticker: str = TICKER, start: str = START_DATE) :
     """Download OHLC data via yfinance and cache locally."""
     os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -67,7 +67,7 @@ def download_data(ticker: str = TICKER, start: str = START_DATE) -> pd.DataFrame
     return df
 
 
-def add_returns_and_volatility(df: pd.DataFrame, vol_window: int = 5) -> pd.DataFrame:
+def add_returns_and_volatility(df: pd.DataFrame, vol_window: int = 5):
     """
     Adds:
       - log_return: daily log return
@@ -101,7 +101,7 @@ def add_returns_and_volatility(df: pd.DataFrame, vol_window: int = 5) -> pd.Data
     return df
 
 
-def load_dataset(vol_window: int = 5) -> pd.DataFrame:
+def load_dataset(vol_window: int = 5):
     raw = download_data()
     return add_returns_and_volatility(raw, vol_window=vol_window)
 
