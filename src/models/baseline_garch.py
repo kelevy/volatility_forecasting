@@ -56,6 +56,11 @@ def run_garch_walk_forward(log_returns: pd.Series, folds, horizon: int = 5) -> l
     ONE forecast per fold for the first test-period date.
 
     Returns a list of (fold_number, forecast) tuples.
+
+    NOTE: kept for reference / simple use cases. For the actual project
+    evaluation, use `forecast_daily_expanding` below instead -- broadcasting
+    one static forecast across an entire ~78-day test window understates
+    GARCH's real forecasting ability.
     """
     results = []
     returns_pct = log_returns * 100
@@ -69,8 +74,57 @@ def run_garch_walk_forward(log_returns: pd.Series, folds, horizon: int = 5) -> l
     return results
 
 
+def forecast_daily_expanding(
+    log_returns: pd.Series,
+    folds,
+    horizon: int = 5,
+    refit_every: int = 5,
+) -> np.ndarray:
+    """
+    For each day in each fold's test window, fits GARCH on all returns
+    strictly before that day (expanding window) and produces a fresh
+    horizon-day-ahead annualized volatility forecast -- rather than
+    broadcasting one static forecast across the whole test window.
+
+    refit_every: re-estimate GARCH parameters every N days rather than
+    every single day (refitting daily is the "purest" approach but is slow
+    and the parameter estimates barely move day-to-day; refitting weekly is
+    a standard, defensible compromise between rigor and runtime). The
+    conditional variance recursion itself still uses every new return as it
+    becomes available -- only the *parameter re-estimation* is throttled.
+
+    Returns predictions in the same order/concatenation as
+    validation.walk_forward_splits folds (matches feature_df row order
+    within each fold's test_idx).
+    """
+    returns_pct = log_returns * 100
+    all_preds = []
+
+    for fold in folds:
+        model = None
+        for i, test_pos in enumerate(fold.test_idx):
+            # Expanding window: all data strictly before this test day.
+            history_end = test_pos  # exclusive upper bound
+            train_returns = returns_pct.iloc[:history_end]
+
+            if model is None or i % refit_every == 0:
+                model = GarchBaseline(horizon=horizon).fit(train_returns)
+            else:
+                # Reuse existing fitted parameters, just extend the
+                # conditional variance recursion with newly available data.
+                from arch import arch_model
+
+                am = arch_model(train_returns, vol="Garch", p=1, q=1, dist="normal")
+                model._fitted_result = am.fix(model._fitted_result.params)
+
+            forecast = model.forecast_annualized_vol()
+            all_preds.append(forecast)
+
+    return np.array(all_preds)
+
+
 if __name__ == "__main__":
-    # Smoke test with synthetic returns (requires `arch` installed)
+    # Smoke test with synthetic returns 
     rng = np.random.default_rng(0)
     n = 1000
     synthetic_returns = pd.Series(rng.normal(0, 1.0, n))  # already in "percent" scale
