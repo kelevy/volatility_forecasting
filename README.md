@@ -23,7 +23,7 @@ forecasts over a classical econometric baseline, once you evaluate honestly?**
 ### 2. Models compared
 | Model | Type | Role |
 |---|---|---|
-| GARCH(1,1) | Classical econometric | Baseline — the industry-standard model for volatility clustering |
+| GARCH(1,1) | Classical econometric | The industry-standard model for volatility clustering |
 | XGBoost | Gradient-boosted trees | ML model using engineered features (lagged realized vol, returns, technical indicators) |
 | LSTM | Deep learning | Sequence model learning directly from the return/volatility time series |
 
