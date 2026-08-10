@@ -30,7 +30,7 @@ def _flatten_columns(df: pd.DataFrame):
     return df
 
 
-def download_data(ticker: str = TICKER, start: str = START_DATE) :
+def download_data(ticker: str = TICKER, start: str = START_DATE):
     """Download OHLC data via yfinance and cache locally."""
     os.makedirs(DATA_DIR, exist_ok=True)
 
