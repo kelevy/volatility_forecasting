@@ -1,7 +1,5 @@
 """
-main.py
-
-Orchestrates the full volatility forecasting pipeline:
+Runs the full volatility forecasting pipeline:
   1. Load and prepare S&P 500 data
   2. Build the leak-free feature matrix
   3. Run walk-forward validation for all four models:
@@ -11,9 +9,6 @@ Orchestrates the full volatility forecasting pipeline:
        - LSTM (DL, raw return sequences)
   4. Evaluate with RMSE, QLIKE, and directional accuracy
   5. Print results table and save diagnostic plots to results/
-
-Usage:
-    python src/main.py
 """
 
 import os
@@ -21,14 +16,14 @@ import sys
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 from data_loader import load_dataset
 from features import build_feature_matrix, get_feature_names, TARGET_COL
 from validation import walk_forward_splits, split_xy
 from evaluate import evaluate_all, results_table
 
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results")
+RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 N_SPLITS = 5
 VOL_WINDOW = 5
 MIN_TRAIN_SIZE = 0.6
@@ -127,7 +122,7 @@ def run_lstm(feature_df, raw_df, folds):
 # Main
 # ─────────────────────────────────────────────
 
-def main():
+if __name__ == "__main__":
     print("=" * 60)
     print("Volatility Forecasting: GARCH vs XGBoost vs LSTM")
     print("=" * 60)
@@ -208,8 +203,4 @@ def main():
     forecasts_df.to_csv(os.path.join(RESULTS_DIR, "forecasts.csv"), index=False)
     print("Saved: results/forecasts.csv")
 
-    print("\nDone. Open notebooks/02_results_analysis.ipynb to visualize and interpret results.")
-
-
-if __name__ == "__main__":
-    main()
+    print("\nDone.")
