@@ -8,7 +8,10 @@ Runs the full volatility forecasting pipeline:
        - XGBoost (ML, hand-engineered features)
        - LSTM (DL, raw return sequences)
   4. Evaluate with RMSE, QLIKE, and directional accuracy
-  5. Print results table and save diagnostic plots to results/
+  5. Saves results to results/
+
+Usage:
+    python src/main.py
 """
 
 import os
@@ -16,14 +19,14 @@ import sys
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+sys.path.insert(0, os.path.dirname(__file__))
 
 from data_loader import load_dataset
 from features import build_feature_matrix, get_feature_names, TARGET_COL
 from validation import walk_forward_splits, split_xy
 from evaluate import evaluate_all, results_table
 
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
+RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results")
 N_SPLITS = 5
 VOL_WINDOW = 5
 MIN_TRAIN_SIZE = 0.6
@@ -36,8 +39,7 @@ MIN_TRAIN_SIZE = 0.6
 def run_naive(feature_df, folds):
     """
     Naive baseline: predict yesterday's realized vol as today's forecast.
-    Always included as the minimum sanity floor — if a model can't beat
-    this, that's a finding worth reporting.
+    Included as the minimum sanity floor.
     """
     all_preds, all_actuals, all_prev = [], [], []
     for fold in folds:
@@ -54,31 +56,23 @@ def run_naive(feature_df, folds):
 # ─────────────────────────────────────────────
 
 def run_garch(feature_df, raw_df, folds):
-    from models.baseline_garch import GarchBaseline
+    """
+    Uses forecast_daily_expanding, which produces a fresh forecast for every
+    test day (refitting parameters periodically, updating the conditional
+    variance recursion daily).
+    """
+    from models.baseline_garch import forecast_daily_expanding
 
-    all_preds, all_actuals, all_prev = [], [], []
-    log_returns = raw_df["log_return"].reindex(feature_df.index).dropna()
+    log_returns = raw_df["log_return"].reindex(feature_df.index)
 
+    all_preds = forecast_daily_expanding(log_returns, folds, horizon=VOL_WINDOW, refit_every=5)
+
+    all_actuals, all_prev = [], []
     for fold in folds:
-        test_dates = feature_df.index[fold.test_idx]
-        train_dates = feature_df.index[fold.train_idx]
+        all_actuals.append(feature_df.iloc[fold.test_idx][TARGET_COL].values)
+        all_prev.append(feature_df.iloc[fold.test_idx]["realized_vol_lag1"].values)
 
-        train_returns = log_returns.loc[log_returns.index.isin(train_dates)] * 100
-        if len(train_returns) < 50:
-            continue
-
-        model = GarchBaseline(horizon=VOL_WINDOW).fit(train_returns)
-        forecast = model.forecast_annualized_vol()
-
-        y_test = feature_df.iloc[fold.test_idx][TARGET_COL].values
-        y_prev = feature_df.iloc[fold.test_idx]["realized_vol_lag1"].values
-
-        # GARCH gives one forecast per fold; broadcast across the test window
-        all_preds.append(np.full(len(y_test), forecast))
-        all_actuals.append(y_test)
-        all_prev.append(y_prev)
-
-    return np.concatenate(all_preds), np.concatenate(all_actuals), np.concatenate(all_prev)
+    return all_preds, np.concatenate(all_actuals), np.concatenate(all_prev)
 
 
 # ─────────────────────────────────────────────
@@ -122,7 +116,7 @@ def run_lstm(feature_df, raw_df, folds):
 # Main
 # ─────────────────────────────────────────────
 
-if __name__ == "__main__":
+def main():
     print("=" * 60)
     print("Volatility Forecasting: GARCH vs XGBoost vs LSTM")
     print("=" * 60)
@@ -204,3 +198,7 @@ if __name__ == "__main__":
     print("Saved: results/forecasts.csv")
 
     print("\nDone.")
+
+
+if __name__ == "__main__":
+    main()
