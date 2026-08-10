@@ -1,8 +1,6 @@
 """
 GARCH(1,1) baseline -- the industry-standard classical model for volatility
-clustering. This is the benchmark the ML/DL models need to beat; if they
-can't, that's a legitimate and interview-worthy finding, not a failure of
-the project.
+clustering. This is the benchmark the ML/DL models need to beat.
 
 Uses the `arch` package (Kevin Sheppard's ARCH toolbox), the standard tool
 for GARCH modelling in Python.

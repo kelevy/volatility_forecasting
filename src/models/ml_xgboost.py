@@ -1,8 +1,8 @@
 """
 Gradient-boosted trees on the engineered feature set (see features.py).
-This is the "ML" model in the comparison -- more flexible than GARCH, but
+This is the ML model in the comparison -- more flexible than GARCH, but
 still using hand-engineered features rather than learning directly from the
-raw sequence (that's the LSTM's job).
+raw sequence like the LSTM model.
 """
 
 import numpy as np
