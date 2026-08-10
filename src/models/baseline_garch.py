@@ -49,49 +49,22 @@ class GarchBaseline:
         return float(annualized_vol)
 
 
-def run_garch_walk_forward(log_returns: pd.Series, folds, horizon: int = 5) -> list:
-    """
-    Runs the GARCH baseline across walk-forward folds. Refits at each fold
-    using only that fold's training window (no peeking ahead), then produces
-    ONE forecast per fold for the first test-period date.
-
-    Returns a list of (fold_number, forecast) tuples.
-
-    NOTE: kept for reference / simple use cases. For the actual project
-    evaluation, use `forecast_daily_expanding` below instead -- broadcasting
-    one static forecast across an entire ~78-day test window understates
-    GARCH's real forecasting ability.
-    """
-    results = []
-    returns_pct = log_returns * 100
-
-    for fold in folds:
-        train_returns = returns_pct.iloc[fold.train_idx]
-        model = GarchBaseline(horizon=horizon).fit(train_returns)
-        forecast = model.forecast_annualized_vol()
-        results.append((fold.fold_number, forecast))
-
-    return results
-
-
 def forecast_daily_expanding(
     log_returns: pd.Series,
     folds,
     horizon: int = 5,
     refit_every: int = 5,
-) -> np.ndarray:
+):
     """
     For each day in each fold's test window, fits GARCH on all returns
     strictly before that day (expanding window) and produces a fresh
-    horizon-day-ahead annualized volatility forecast -- rather than
-    broadcasting one static forecast across the whole test window.
+    horizon-day-ahead annualized volatility forecast.
 
     refit_every: re-estimate GARCH parameters every N days rather than
     every single day (refitting daily is the "purest" approach but is slow
-    and the parameter estimates barely move day-to-day; refitting weekly is
-    a standard, defensible compromise between rigor and runtime). The
-    conditional variance recursion itself still uses every new return as it
-    becomes available -- only the *parameter re-estimation* is throttled.
+    and the parameter estimates barely move day-to-day). The conditional 
+    variance recursion itself still uses every new return as it becomes 
+    available -- only the *parameter re-estimation* is throttled.
 
     Returns predictions in the same order/concatenation as
     validation.walk_forward_splits folds (matches feature_df row order
