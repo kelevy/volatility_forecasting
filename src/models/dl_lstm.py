@@ -6,8 +6,7 @@ features and the GARCH baseline.
 
 Uses PyTorch. Kept deliberately small (single LSTM layer, small hidden size)
 since this is a single-asset, moderate-data-size problem -- a huge network
-here would just overfit, which is itself worth noting in an interview if
-asked "why not a bigger model?".
+here would just overfit.
 """
 
 import numpy as np
@@ -41,12 +40,30 @@ def build_sequences(log_returns: pd.Series, target: pd.Series, seq_len: int = 21
 
 
 class LSTMVolModel:
-    def __init__(self, seq_len: int = 21, hidden_size: int = 16, epochs: int = 30, lr: float = 1e-3):
+    def __init__(self, seq_len: int = 21, hidden_size: int = 16, epochs: int = 100, lr: float = 1e-3):
         self.seq_len = seq_len
         self.hidden_size = hidden_size
         self.epochs = epochs
         self.lr = lr
         self.net = None
+        self._x_mean = None
+        self._x_std = None
+
+    def _normalize_fit(self, X_train: np.ndarray):
+        """
+        Fits normalization stats on TRAINING data only (never test), then
+        returns the normalized training set. This mirrors what XGBoost gets
+        for free (tree splits are scale-invariant) -- without this, raw log
+        returns (~0.01 scale) make gradient-based training very slow/unstable.
+        """
+        self._x_mean = X_train.mean()
+        self._x_std = X_train.std() + 1e-8
+        return (X_train - self._x_mean) / self._x_std
+
+    def _normalize_apply(self, X: np.ndarray) -> np.ndarray:
+        if self._x_mean is None:
+            raise RuntimeError("Call .fit() before predict() -- no normalization stats yet.")
+        return (X - self._x_mean) / self._x_std
 
     def _build_net(self):
         import torch.nn as nn
@@ -68,11 +85,13 @@ class LSTMVolModel:
         import torch
         import torch.nn as nn
 
+        X_train_norm = self._normalize_fit(X_train)
+
         self.net = self._build_net()
         optimizer = torch.optim.Adam(self.net.parameters(), lr=self.lr)
         loss_fn = nn.MSELoss()
 
-        X_t = torch.tensor(X_train)
+        X_t = torch.tensor(X_train_norm)
         y_t = torch.tensor(y_train)
 
         self.net.train()
@@ -81,6 +100,7 @@ class LSTMVolModel:
             preds = self.net(X_t)
             loss = loss_fn(preds, y_t)
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.net.parameters(), max_norm=1.0)
             optimizer.step()
 
         return self
@@ -91,9 +111,11 @@ class LSTMVolModel:
         if self.net is None:
             raise RuntimeError("Call .fit() before predict().")
 
+        X_test_norm = self._normalize_apply(X_test)
+
         self.net.eval()
         with torch.no_grad():
-            preds = self.net(torch.tensor(X_test)).numpy()
+            preds = self.net(torch.tensor(X_test_norm)).numpy()
         return preds
 
 
