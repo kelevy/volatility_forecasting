@@ -1,8 +1,5 @@
 """
-LSTM sequence model -- learns directly from a rolling window of past returns,
-rather than the hand-engineered features used by XGBoost. This tests whether
-letting the model learn its own temporal representation beats hand-crafted
-features and the GARCH baseline.
+LSTM sequence model -- learns directly from a rolling window of past returns.
 
 Uses PyTorch. Kept deliberately small (single LSTM layer, small hidden size)
 since this is a single-asset, moderate-data-size problem -- a huge network
@@ -52,9 +49,7 @@ class LSTMVolModel:
     def _normalize_fit(self, X_train: np.ndarray):
         """
         Fits normalization stats on TRAINING data only (never test), then
-        returns the normalized training set. This mirrors what XGBoost gets
-        for free (tree splits are scale-invariant) -- without this, raw log
-        returns (~0.01 scale) make gradient-based training very slow/unstable.
+        returns the normalized training set. 
         """
         self._x_mean = X_train.mean()
         self._x_std = X_train.std() + 1e-8
@@ -119,7 +114,8 @@ class LSTMVolModel:
         return preds
 
 
-def run_lstm_walk_forward(log_returns: pd.Series, target: pd.Series, folds, seq_len: int = 21):
+def run_lstm_walk_forward(log_returns: pd.Series, target: pd.Series, prev_series: pd.Series,
+                           folds, seq_len: int = 21):
     """
     Runs the LSTM across walk-forward folds. Note the fold indices come from
     validation.walk_forward_splits() on the *feature_df* row-space; here we
@@ -128,7 +124,7 @@ def run_lstm_walk_forward(log_returns: pd.Series, target: pd.Series, folds, seq_
     X_all, y_all, seq_idx = build_sequences(log_returns, target, seq_len=seq_len)
 
     all_preds, all_actuals, all_prev = [], [], []
-    prev_vals = target.shift(seq_len).values  # rough "previous period" proxy for direction scoring
+    prev_vals = prev_series.values
 
     for fold in folds:
         train_mask = np.isin(seq_idx, fold.train_idx)
@@ -157,6 +153,7 @@ if __name__ == "__main__":
     n, seq_len = 500, 21
     returns = pd.Series(rng.normal(0, 0.01, n))
     target = pd.Series(np.abs(rng.normal(0.2, 0.03, n)))
+    prev_series = target.shift(1).fillna(target.iloc[0])  # stand-in for realized_vol_lag1 in this smoke test
 
     X, y, idx = build_sequences(returns, target, seq_len=seq_len)
     print("Sequence tensor shape:", X.shape)

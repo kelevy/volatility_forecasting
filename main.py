@@ -11,7 +11,7 @@ Runs the full volatility forecasting pipeline:
   5. Saves results to results/
 
 Usage:
-    python src/main.py
+    python main.py
 """
 
 import os
@@ -109,7 +109,8 @@ def run_lstm(feature_df, raw_df, folds):
 
     log_returns = raw_df["log_return"].reindex(feature_df.index)
     target = feature_df[TARGET_COL]
-    return run_lstm_walk_forward(log_returns, target, folds, seq_len=21)
+    prev_series = feature_df["realized_vol_lag1"]
+    return run_lstm_walk_forward(log_returns, target, prev_series, folds, seq_len=21)
 
 
 # ─────────────────────────────────────────────
