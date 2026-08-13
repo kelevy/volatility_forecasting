@@ -1,6 +1,6 @@
 """
 GARCH(1,1) baseline -- the industry-standard classical model for volatility
-clustering. This is the benchmark the ML/DL models need to beat.
+clustering. 
 
 Uses the `arch` package (Kevin Sheppard's ARCH toolbox), the standard tool
 for GARCH modelling in Python.
@@ -12,8 +12,7 @@ import pandas as pd
 
 class GarchBaseline:
     """
-    Fits GARCH(1,1) on daily log returns and forecasts realized volatility
-    over the same horizon used elsewhere in the project (vol_window days),
+    Fits GARCH(1,1) on daily log returns and forecasts realized volatility,
     refitting at each walk-forward fold on that fold's training data only.
     """
 
@@ -59,16 +58,6 @@ def forecast_daily_expanding(
     For each day in each fold's test window, fits GARCH on all returns
     strictly before that day (expanding window) and produces a fresh
     horizon-day-ahead annualized volatility forecast.
-
-    refit_every: re-estimate GARCH parameters every N days rather than
-    every single day (refitting daily is the "purest" approach but is slow
-    and the parameter estimates barely move day-to-day). The conditional 
-    variance recursion itself still uses every new return as it becomes 
-    available -- only the *parameter re-estimation* is throttled.
-
-    Returns predictions in the same order/concatenation as
-    validation.walk_forward_splits folds (matches feature_df row order
-    within each fold's test_idx).
     """
     returns_pct = log_returns * 100
     all_preds = []

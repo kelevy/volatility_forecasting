@@ -13,8 +13,7 @@ import pandas as pd
 def build_sequences(log_returns: pd.Series, target: pd.Series, seq_len: int = 21):
     """
     Builds (X, y) where each X[i] is a window of `seq_len` trailing log
-    returns [t-seq_len ... t-1], and y[i] is target[t] (already forward-
-    looking realized vol computed upstream in data_loader.py).
+    returns [t-seq_len ... t-1], and y[i] is target[t].
 
     Strictly no look-ahead: X[i] only uses returns up to and including t-1.
     """
@@ -48,7 +47,7 @@ class LSTMVolModel:
 
     def _normalize_fit(self, X_train: np.ndarray):
         """
-        Fits normalization stats on TRAINING data only (never test), then
+        Fits normalization stats on TRAINING data only, then
         returns the normalized training set. 
         """
         self._x_mean = X_train.mean()
@@ -117,9 +116,7 @@ class LSTMVolModel:
 def run_lstm_walk_forward(log_returns: pd.Series, target: pd.Series, prev_series: pd.Series,
                            folds, seq_len: int = 21):
     """
-    Runs the LSTM across walk-forward folds. Note the fold indices come from
-    validation.walk_forward_splits() on the *feature_df* row-space; here we
-    rebuild sequences and map fold boundaries onto sequence-index space.
+    Runs the LSTM across walk-forward folds. 
     """
     X_all, y_all, seq_idx = build_sequences(log_returns, target, seq_len=seq_len)
 
@@ -153,7 +150,7 @@ if __name__ == "__main__":
     n, seq_len = 500, 21
     returns = pd.Series(rng.normal(0, 0.01, n))
     target = pd.Series(np.abs(rng.normal(0.2, 0.03, n)))
-    prev_series = target.shift(1).fillna(target.iloc[0])  # stand-in for realized_vol_lag1 in this smoke test
+    prev_series = target.shift(1).fillna(target.iloc[0])  
 
     X, y, idx = build_sequences(returns, target, seq_len=seq_len)
     print("Sequence tensor shape:", X.shape)
