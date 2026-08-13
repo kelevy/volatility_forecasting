@@ -24,7 +24,6 @@ def rmse(y_true, y_pred):
 
 def qlike(y_true, y_pred, eps: float = 1e-8):
     """
-    QLIKE loss: mean( y_true/y_pred - log(y_true/y_pred) - 1 )
     Requires strictly positive values (volatility forecasts should be).
     """
     y_true = np.clip(np.asarray(y_true), eps, None)
