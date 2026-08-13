@@ -36,11 +36,13 @@ def build_sequences(log_returns: pd.Series, target: pd.Series, seq_len: int = 21
 
 
 class LSTMVolModel:
-    def __init__(self, seq_len: int = 21, hidden_size: int = 16, epochs: int = 100, lr: float = 1e-3):
+    def __init__(self, seq_len: int = 21, hidden_size: int = 16, epochs: int = 100,
+                 lr: float = 1e-3, seed: int = 42):
         self.seq_len = seq_len
         self.hidden_size = hidden_size
         self.epochs = epochs
         self.lr = lr
+        self.seed = seed
         self.net = None
         self._x_mean = None
         self._x_std = None
@@ -48,7 +50,7 @@ class LSTMVolModel:
     def _normalize_fit(self, X_train: np.ndarray):
         """
         Fits normalization stats on TRAINING data only, then
-        returns the normalized training set. 
+        returns the normalized training set.
         """
         self._x_mean = X_train.mean()
         self._x_std = X_train.std() + 1e-8
@@ -78,6 +80,8 @@ class LSTMVolModel:
     def fit(self, X_train: np.ndarray, y_train: np.ndarray):
         import torch
         import torch.nn as nn
+
+        torch.manual_seed(self.seed)
 
         X_train_norm = self._normalize_fit(X_train)
 
@@ -116,7 +120,7 @@ class LSTMVolModel:
 def run_lstm_walk_forward(log_returns: pd.Series, target: pd.Series, prev_series: pd.Series,
                            folds, seq_len: int = 21):
     """
-    Runs the LSTM across walk-forward folds. 
+    Runs the LSTM across walk-forward folds.
     """
     X_all, y_all, seq_idx = build_sequences(log_returns, target, seq_len=seq_len)
 
@@ -145,12 +149,12 @@ def run_lstm_walk_forward(log_returns: pd.Series, target: pd.Series, prev_series
 
 
 if __name__ == "__main__":
-    # Smoke test with synthetic data 
+    # Smoke test with synthetic data
     rng = np.random.default_rng(0)
     n, seq_len = 500, 21
     returns = pd.Series(rng.normal(0, 0.01, n))
     target = pd.Series(np.abs(rng.normal(0.2, 0.03, n)))
-    prev_series = target.shift(1).fillna(target.iloc[0])  
+    prev_series = target.shift(1).fillna(target.iloc[0])
 
     X, y, idx = build_sequences(returns, target, seq_len=seq_len)
     print("Sequence tensor shape:", X.shape)
