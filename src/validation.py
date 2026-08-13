@@ -16,7 +16,6 @@ overlap with or precede their training data.
 """
 
 from dataclasses import dataclass
-from typing import Iterator, Tuple
 
 import numpy as np
 import pandas as pd
