@@ -1,0 +1,10 @@
+numpy<2
+pandas>=2.0
+yfinance>=0.2.40
+xgboost>=2.0
+arch>=6.3
+torch>=2.1
+matplotlib>=3.7
+scipy>=1.11
+statsmodels>=0.14
+jupyter>=1.0
