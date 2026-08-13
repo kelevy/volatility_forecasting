@@ -80,24 +80,10 @@ def run_garch(feature_df, raw_df, folds):
 # ─────────────────────────────────────────────
 
 def run_xgb(feature_df, folds):
-    from models.ml_xgboost import XGBVolModel
+    from models.ml_xgboost import run_xgb_walk_forward
 
     feature_cols = get_feature_names(feature_df)
-    all_preds, all_actuals, all_prev = [], [], []
-
-    for fold in folds:
-        X_train, y_train, X_test, y_test = split_xy(
-            feature_df, feature_cols, TARGET_COL, fold
-        )
-        model = XGBVolModel().fit(X_train, y_train)
-        preds = model.predict(X_test)
-        y_prev = feature_df.iloc[fold.test_idx]["realized_vol_lag1"].values
-
-        all_preds.append(preds)
-        all_actuals.append(y_test.values)
-        all_prev.append(y_prev)
-
-    return np.concatenate(all_preds), np.concatenate(all_actuals), np.concatenate(all_prev)
+    return run_xgb_walk_forward(feature_df, feature_cols, TARGET_COL, folds)
 
 
 # ─────────────────────────────────────────────
